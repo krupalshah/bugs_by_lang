@@ -4,6 +4,7 @@ from config import debug
 from parse import generate_url
 from fetch import search_issues, write_response
 
+# preparing cli options using argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-l", "--language",
                     type=str,
@@ -50,14 +51,28 @@ parser.add_argument("-f", "--file",
 args = parser.parse_args()
 
 
-if __name__ == '__main__':
-    if len(sys.argv):
+def run(options):
+    if debug:
+        print("options: %s" % options)
+    # checking if at least one option is specified
+    if len(options) <= 1:
         print("You need to specify at least one option here. Type -h for more info.")
+        return
+
+    # generating url based on options
     url = generate_url(args)
     if debug:
-        print(url)
+        print("url : %s" % url)
+
+    # authenticating if required and calling issue search api
     response = search_issues(url)
     if debug:
-        print(response)
+        print("response : %s" % str(response))
+
+    # writing response to file if option has been specified
     if args.file:
         write_response(args.file, response)
+
+
+if __name__ == '__main__':
+    run(sys.argv)
