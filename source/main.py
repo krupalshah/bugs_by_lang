@@ -1,8 +1,7 @@
 import argparse
 import sys
-from config import debug
-from parse import generate_url
-from fetch import search_issues, write_response
+import requests
+from config import *
 
 # preparing cli options using argparse
 parser = argparse.ArgumentParser()
@@ -51,6 +50,64 @@ parser.add_argument("-f", "--file",
 args = parser.parse_args()
 
 
+def generate_params(args):
+   # ex: https: // api.github.com / search / issues?q = windows + label: bug + language: python + state: open & sort = created & order = asc
+    params = []
+    if args.query:
+        params.append(args.query)
+    else:
+        params.append("bug")
+    if args.language:
+        params.append("language:%s" % args.language)
+    if args.open:
+        params.append("state:open")
+    if not args.all:
+        params.append("label:bug")
+    if args.user:
+        params.append("user:%s" % args.user)
+    if args.repo:
+        params.append("repo:%s" % args.repo)
+    if args.author:
+        params.append("author:%s" % args.author)
+    if args.assignee:
+        params.append("assignee:%s" % args.assignee)
+    if args.mentions:
+        params.append("mentions:%s" % args.assignee)
+    params.append("type:issue")
+    return "+".join(params)
+
+
+def search_issues(query):
+    if not query:
+        return None
+    try:
+        headers = {
+            "content-type": "application/json"
+        }
+        query_params = {
+            "q": query
+        }
+        req = requests.get(issues_url, params=query_params, headers=headers)
+        req.raise_for_status()
+        if debug:
+            print("url : %s" % req.url)
+        res = req.json()
+        return res
+    except ValueError as err:
+        print("Unknown error occured while fetching data!")
+        print("trace : \n", err)
+        return None
+    except requests.exceptions.HTTPError as err:
+        print("Server error occured while fetching data!")
+        if debug:
+            print("error response : %s" % str(err.response))
+
+
+def write_response(file_name, response):
+    if not response:
+        return
+
+
 def run(options):
     if debug:
         print("options: %s" % options)
@@ -59,19 +116,21 @@ def run(options):
         print("You need to specify at least one option here. Type -h for more info.")
         return
 
-    # generating url based on options
-    url = generate_url(args)
+    # generating query params based on options
+    params = generate_params(args)
     if debug:
-        print("url : %s" % url)
+        print("params : %s" % params)
 
-    # authenticating if required and calling issue search api
-    response = search_issues(url)
+    # calling issue search api
+    response = search_issues(params)
     if debug:
-        print("response : %s" % str(response))
+        print("response : %s" % response)
 
     # writing response to file if option has been specified
     if args.file:
         write_response(args.file, response)
+
+    print("Count : %s" % response["total_count"])
 
 
 if __name__ == '__main__':
