@@ -8,16 +8,22 @@ auth_token = None
 def __authenticate():
     try:
         payload = {
-            "client_id": client_id,
             "client_secret": client_secret,
             "note": "bugs_by_lang"
         }
-        req = requests.post(auth_url, data=payload)
+        headers = {
+            "content-type": "application/json"
+        }
+        url = auth_url + client_id + "/bugs_by_lang"
+        if debug:
+            print("authentication url : %s" % url)
+        req = requests.put(url, data=payload, headers=headers)
         req.raise_for_status()
         res = req.json
         if debug:
-            print(res)
-        auth_token = res['token']
+            print("authenticion response : %s" % res)
+        if res['token']:
+            auth_token = res['token']
     except ValueError as err:
         print("Error occured while authenticating!")
         if debug:
@@ -27,10 +33,13 @@ def __authenticate():
 def search_issues(url):
     if not url:
         return None
-    if not auth_token:
-        __authenticate()
+    # if not auth_token:
+    #     __authenticate()
     try:
-        headers = {"access_token": auth_token}
+        headers = {
+            # "access_token": auth_token,
+            "content-type": "application/json"
+        }
         req = requests.get(url, headers=headers)
         req.raise_for_status()
         res = req.json
@@ -39,7 +48,7 @@ def search_issues(url):
         print("Unknown error occured while fetching data!")
         print("trace : \n", err)
         return None
-    except HTTPError as err:
+    except requests.exceptions.HTTPError as err:
         print("Server error occured while fetching data!")
         if debug:
             print("error response : %s" % str(err.response))

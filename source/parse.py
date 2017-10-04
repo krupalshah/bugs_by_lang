@@ -6,6 +6,8 @@ def generate_url(args):
     params = []
     if args.query:
         params.append("q=%s" % args.query)
+    else:
+        params.append("q=bug")
     if args.language:
         params.append("language:%s" % args.language)
     if args.open:
