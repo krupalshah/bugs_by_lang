@@ -1,6 +1,8 @@
 import argparse
 import sys
 import requests
+import json
+import time
 from config import *
 
 # preparing cli options using argparse
@@ -80,19 +82,18 @@ def generate_params(args):
 def search_issues(query):
     if not query:
         return None
+    headers = {
+        "content-type": "application/json"
+    }
+    query_params = {
+        "q": query
+    }
+    req = requests.get(issues_url, params=query_params, headers=headers)
+    req.raise_for_status()
+    if debug:
+        print("url : %s" % req.url)
     try:
-        headers = {
-            "content-type": "application/json"
-        }
-        query_params = {
-            "q": query
-        }
-        req = requests.get(issues_url, params=query_params, headers=headers)
-        req.raise_for_status()
-        if debug:
-            print("url : %s" % req.url)
-        res = req.json()
-        return res
+        return req.json()
     except ValueError as err:
         print("Unknown error occured while fetching data!")
         print("trace : \n", err)
@@ -101,11 +102,20 @@ def search_issues(query):
         print("Server error occured while fetching data!")
         if debug:
             print("error response : %s" % str(err.response))
+        return None
 
 
 def write_response(file_name, response):
     if not response:
         return
+    formatted_json = json.dumps(response, indent=4)
+    try:
+        file = open(file_name, "w")
+        file.write(formatted_json)
+        file.close()
+    except IOError as err:
+        print("Error occured while writing to file.")
+        print("trace : \n", err)
 
 
 def run(options):
