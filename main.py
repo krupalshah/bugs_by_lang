@@ -2,7 +2,6 @@ import argparse
 import sys
 import requests
 import json
-import time
 from config import *
 
 # preparing cli options using argparse
@@ -48,7 +47,7 @@ parser.add_argument("-mn", "--mentions",
 parser.add_argument("-f", "--file",
                     type=str,
                     metavar="",
-                    help="specify a file name if you want to write incoming json response.")
+                    help="specify a file name if you want to write json response.")
 args = parser.parse_args()
 
 
@@ -123,7 +122,8 @@ def run(options):
         print("options: %s" % options)
     # checking if at least one option is specified
     if len(options) <= 1:
-        print("You need to specify at least one option here. Type -h for more info.")
+        print("You need to specify at least one option here.")
+        print("Type -h for more info.")
         return
 
     # generating query params based on options
